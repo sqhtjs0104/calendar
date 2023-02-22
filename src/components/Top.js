@@ -12,6 +12,8 @@ const TopDiv = styled.div`
   flex-flow: row nowrap;
   align-items: end;
   border-bottom: 2px solid #eecb93;
+	border-top-left-radius: 10px;
+	border-top-right-radius: 10px;
 
   .top__nowYM {
     width: 100%;
@@ -60,6 +62,10 @@ const Top = memo(({nowTime, setNowTime}) => {
 	const toPrev = useCallback(e => {
 		e.preventDefault();
 		if (!nowTime) return;
+		const parents = document.querySelectorAll('tbody > tr');
+		parents.forEach(v => {
+			v.innerHTML = "";
+		});
 		setNowTime(state => {
 			return nowTime.subtract(1, 'month');
 		});
@@ -68,6 +74,10 @@ const Top = memo(({nowTime, setNowTime}) => {
 	const toNext = useCallback(e => {
 		e.preventDefault();
 		if (!nowTime) return;
+		const parents = document.querySelectorAll('tbody > tr');
+		parents.forEach(v => {
+			v.innerHTML = "";
+		});
 		setNowTime(state => {
 			return nowTime.add(1, 'month');
 		});

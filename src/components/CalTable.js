@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useState } from 'react';
+import React, { memo, useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 const Table = styled.table`
@@ -8,6 +8,8 @@ const Table = styled.table`
   background-color: #FAF8F1;
   table-layout: fixed;
   padding: 20px 10px;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
 
   th {
     border: 5px solid #FAF8F1;
@@ -33,9 +35,16 @@ const Table = styled.table`
       border: 1px solid #aaa;
       border-radius: 10px;
 
+      &.sat {
+        color: #3850d8;
+      }
+
+      &.sun {
+        color: #d33838;
+      }
+
       &.outer {
-        border: 1px solid #ddd;
-        color: #ccc;
+        opacity: 0.4;
       }
 
       &:hover {
@@ -47,7 +56,17 @@ const Table = styled.table`
 `
 
 const CalTable = memo(({dayInfo}) => {
-  const [monthDate, setMonthDate] = useState(null);
+  const getWeekend = useCallback((index, isOuter) => {
+    let str = "";
+    if ((index - 5) % 7 === 0) str += `<div class='td sat`; // 5 배수 + 7면 토요일
+    else if ((index - 6) % 7 === 0) str += `<div class='td sun`; // 6 배수 + 7이면 일요일 
+    else str += `<div class='td`; // 아니면 걍 평일
+
+    if (isOuter) str += ` outer'>`; // 당월 바깥 날짜면 흐리게
+    else str += `'>`;
+
+    return str;
+  }, []);
 
   useEffect(() =>{
 		if (!dayInfo) return;
@@ -55,11 +74,11 @@ const CalTable = memo(({dayInfo}) => {
 		for (let i = 0; i < 35; i++) {
       const parent = document.querySelector(`.tr${parseInt(i / 7 + 1)}`);
 			if (i < dayInfo.startDay) { // 아직 이번달 시작 안함
-        parent.innerHTML += `<td><div class='td outer'>${dayInfo.startDate + i}</div></td>`;
+        parent.innerHTML += `<td>${getWeekend(i, true)}${dayInfo.startDate + i}</div></td>`;
 			} else if (i > dayInfo.endDate + dayInfo.startDay - 1) { // 이번달 끝남
-        parent.innerHTML += `<td><div class='td outer'>${i - dayInfo.endDate - dayInfo.startDay + 1}</div></td>`;
+        parent.innerHTML += `<td>${getWeekend(i, true)}${i - dayInfo.endDate - dayInfo.startDay + 1}</div></td>`;
 			} else { // 이게 이번달 날자들
-        parent.innerHTML += `<td><div class='td'>${i + 1 - dayInfo.startDay}</div></td>`;
+        parent.innerHTML += `<td>${getWeekend(i, false)}${i + 1 - dayInfo.startDay}</div></td>`;
 			}
 		}
 	}, [dayInfo]);
