@@ -56,7 +56,7 @@ const TopDiv = styled.div`
       scale: 1.1;
     }
   }
-`
+`;
 
 const Top = memo(({nowTime, setNowTime}) => {
 	const toPrev = useCallback(e => {

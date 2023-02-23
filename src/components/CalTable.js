@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, { memo, useCallback, useEffect } from 'react';
 import styled from 'styled-components';
 
 const Table = styled.table`
@@ -53,20 +53,43 @@ const Table = styled.table`
       }
     }
   }
-`
+`;
 
-const CalTable = memo(({dayInfo}) => {
-  const getWeekend = useCallback((index, isOuter) => {
-    let str = "";
-    if ((index - 5) % 7 === 0) str += `<div class='td sat`; // 5 배수 + 7면 토요일
-    else if ((index - 6) % 7 === 0) str += `<div class='td sun`; // 6 배수 + 7이면 일요일 
-    else str += `<div class='td`; // 아니면 걍 평일
+const CalTable = memo(({dayInfo, setIsSidebarOpen, setCurrentSidebarTarget}) => {
+  const openSidebar = useCallback(e => {
+    e.preventDefault();
+    setCurrentSidebarTarget(state => {
+      const temp = {
+        date: e.currentTarget.dataset.date,
+        day: e.currentTarget.dataset.day,
+      }
+      return temp;
+    });
+    setIsSidebarOpen(true);
+  }, [setCurrentSidebarTarget, setIsSidebarOpen]);
 
-    if (isOuter) str += ` outer'>`; // 당월 바깥 날짜면 흐리게
-    else str += `'>`;
+  const makeDayTd = useCallback((index, isOuter, value) => {
+    const newTd = document.createElement('td');
+    const newDiv = document.createElement('div');
 
-    return str;
-  }, []);
+    newDiv.classList.add('td');
+    newDiv.addEventListener('click', openSidebar);
+    newDiv.dataset.date = value;
+    newDiv.dataset.day = index % 7;
+
+    if (index % 7 === 5) {
+      newDiv.classList.add('sat');
+    } else if (index % 7 === 6) {
+      newDiv.classList.add('sun');
+    }
+
+    if (isOuter) newDiv.classList.add('outer');
+
+    newDiv.innerHTML = value;
+
+    newTd.appendChild(newDiv);
+    return newTd;
+  }, [openSidebar]);
 
   useEffect(() =>{
 		if (!dayInfo) return;
@@ -74,14 +97,14 @@ const CalTable = memo(({dayInfo}) => {
 		for (let i = 0; i < 35; i++) {
       const parent = document.querySelector(`.tr${parseInt(i / 7 + 1)}`);
 			if (i < dayInfo.startDay) { // 아직 이번달 시작 안함
-        parent.innerHTML += `<td>${getWeekend(i, true)}${dayInfo.startDate + i}</div></td>`;
+        parent.appendChild(makeDayTd(i, true, dayInfo.startDate + i));
 			} else if (i > dayInfo.endDate + dayInfo.startDay - 1) { // 이번달 끝남
-        parent.innerHTML += `<td>${getWeekend(i, true)}${i - dayInfo.endDate - dayInfo.startDay + 1}</div></td>`;
+        parent.appendChild(makeDayTd(i, true, i - dayInfo.endDate - dayInfo.startDay + 1));
 			} else { // 이게 이번달 날자들
-        parent.innerHTML += `<td>${getWeekend(i, false)}${i + 1 - dayInfo.startDay}</div></td>`;
+        parent.appendChild(makeDayTd(i, false, i + 1 - dayInfo.startDay));
 			}
 		}
-	}, [dayInfo]);
+	}, [dayInfo, makeDayTd]);
 
   return (
     <Table>

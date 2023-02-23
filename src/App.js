@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import dayjs from 'dayjs';
 
@@ -8,7 +8,6 @@ import Sidebar from './components/Sidebar';
 
 const MainWrap = styled.div`
   font-family: 'Roboto Mono', monospace;
-
   width: 100%;
   max-width: 1200px;
   height: 100%;
@@ -20,6 +19,7 @@ const MainWrap = styled.div`
   margin: auto;
   border: 1px solid #C58940;
   border-radius: 10px;
+  overflow: hidden;
 `;
 
 const Overlay = styled.div`
@@ -29,15 +29,34 @@ const Overlay = styled.div`
   width: 100%;
   height: 100%;
   background: #00000015;
-`
+
+  visibility: hidden;
+  &.active {
+    visibility: visible;
+  }
+`;
+
+const test = [
+  {
+    time: "2023-02-20"
+  }
+];
 
 const App = memo(() => {
   const [nowTime, setNowTime] = useState(null);
 	const [dayInfo, setDayInfo] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [currentSidebarTarget, setCurrentSidebarTarget] = useState(null);
+  const [schedule, setSchedule] = useState(null);
 
 	useEffect(() => {
 		setNowTime(new dayjs());
+    setSchedule(test);
 	}, []);
+
+  useEffect(() => {
+    console.log(schedule);
+  }, [schedule]);
 
 	useEffect(() => {
 		if (!nowTime) return;
@@ -51,12 +70,17 @@ const App = memo(() => {
 		});
 	}, [nowTime]);
 
+  const onFocusOut = useCallback(e => {
+    e.preventDefault();
+    setIsSidebarOpen(false);
+  }, [setIsSidebarOpen]);
+
   return (
     <MainWrap>
       <Top nowTime={nowTime} setNowTime={setNowTime} />
-      <CalTable dayInfo={dayInfo} />
-      <Overlay />
-      <Sidebar />
+      <CalTable dayInfo={dayInfo} setIsSidebarOpen={setIsSidebarOpen} setCurrentSidebarTarget={setCurrentSidebarTarget} />
+      <Overlay className={isSidebarOpen ? "active" : ""} onClick={onFocusOut} />
+      <Sidebar isOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} targetDate={currentSidebarTarget} />
     </MainWrap>
   );
 });
