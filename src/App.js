@@ -1,10 +1,14 @@
 import React, { memo, useState, useEffect } from 'react';
 import styled from 'styled-components';
-import Top from './components/Top';
-import CalTable from './components/CalTable';
 import dayjs from 'dayjs';
 
+import Top from './components/Top';
+import CalTable from './components/CalTable';
+import Sidebar from './components/Sidebar';
+
 const MainWrap = styled.div`
+  font-family: 'Roboto Mono', monospace;
+
   width: 100%;
   max-width: 1200px;
   height: 100%;
@@ -17,6 +21,15 @@ const MainWrap = styled.div`
   border: 1px solid #C58940;
   border-radius: 10px;
 `;
+
+const Overlay = styled.div`
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: #00000015;
+`
 
 const App = memo(() => {
   const [nowTime, setNowTime] = useState(null);
@@ -42,6 +55,8 @@ const App = memo(() => {
     <MainWrap>
       <Top nowTime={nowTime} setNowTime={setNowTime} />
       <CalTable dayInfo={dayInfo} />
+      <Overlay />
+      <Sidebar />
     </MainWrap>
   );
 });
