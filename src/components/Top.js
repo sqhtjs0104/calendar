@@ -4,8 +4,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSquareCaretLeft, faSquareCaretRight } from '@fortawesome/free-solid-svg-icons';
 
 const TopDiv = styled.div`
+  --standard: 100px;
+  @media screen and (max-width: 1000px) and (min-width: 451px) { --standard: 130px; }
+  @media screen and (max-width: 450px) { --standard: 100px; }
+
   width: 100%;
-  padding: 10px;
+  padding: calc(var(--standard) / 100 * 10);
   background-color: #FAEAB1;
   box-sizing: border-box;
   display: flex;
@@ -17,19 +21,19 @@ const TopDiv = styled.div`
 
   .top__nowYM {
     width: 100%;
-    height: 50px;
+    height: calc(var(--standard) / 100 * 50);
     color: #C58940;
     height: 100%;
 
     .top__nowYM__info {
-      padding: 0 5px;
+      padding: 0 calc(var(--standard) / 100 * 5);
       margin: 0;
-      margin-left: 20px;
+      margin-left: calc(var(--standard) / 100 * 20);
       display: inline-block;
 
       h1, h3 {
         display: inline-block;
-        margin: 0 2px;
+        margin: 0 calc(var(--standard) / 100 * 2);
         line-height: 1;
       }
 
@@ -42,10 +46,10 @@ const TopDiv = styled.div`
 
   button {
     border: none;
-    border-radius: 10px;
+    border-radius: calc(var(--standard) / 100 * 10);
     color: #C58940;
     background: none;
-    font-size: 25px;
+    font-size: calc(var(--standard) / 100 * 26);
     box-sizing: border-box;
     margin: 0;
     padding: 0;

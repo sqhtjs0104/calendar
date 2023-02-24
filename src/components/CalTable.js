@@ -2,38 +2,54 @@ import React, { memo, useCallback, useEffect } from 'react';
 import styled from 'styled-components';
 
 const Table = styled.table`
+  --standard: 100px;
+  @media screen and (max-width: 1000px) and (min-width: 451px) { --standard: 130px; }
+  @media screen and (max-width: 450px) { --standard: 100px; }
+  
   width: 100%;
   height: 100%;
   box-sizing: border-box;
   background-color: #FAF8F1;
   table-layout: fixed;
-  padding: 20px 10px;
+  padding: calc(var(--standard) / 100 * 20) calc(var(--standard) / 100 * 10);
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
 
-  th {
-    border: 5px solid #FAF8F1;
-    text-align: left;
+  @media screen and (max-width: 450px) {
+    border-collapse: collapse;
   }
 
   th {
     background-color: #F0A04B;
-    padding: 2px 5px;
-    border-radius: 10px;
-    font-size: 13px;
+    padding: calc(var(--standard) / 100 * 2) calc(var(--standard) / 100 * 5);
+    border-radius: calc(var(--standard) / 100 * 10);
+    font-size: calc(var(--standard) / 100 * 13);
+    text-align: left;
+
+    @media screen and (max-width: 450px) {
+      border-radius: 0
+    }
   }
 
   td {
-    border: 5px solid #FAF8F1;
-    font-size: 15px;
+    border: calc(var(--standard) / 100 * 5) solid #FAF8F1;
+    font-size: calc(var(--standard) / 100 * 15);
     box-sizing: border-box;
+
+    @media screen and (max-width: 450px) {
+      border: none;
+    }
 
     .td {
       vertical-align : top;
-      padding: 10px;
+      padding: calc(var(--standard) / 100 * 10);
       height: 80%;
       border: 1px solid #aaa;
       border-radius: 10px;
+
+      @media screen and (max-width: 450px) {
+        padding: 2px;
+      }
 
       &.sat {
         color: #3850d8;

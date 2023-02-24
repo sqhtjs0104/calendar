@@ -7,6 +7,10 @@ import CalTable from './components/CalTable';
 import Sidebar from './components/Sidebar';
 
 const MainWrap = styled.div`
+  --standard: 100px;
+  @media screen and (max-width: 1000px) and (min-width: 451px) { --standard: 130px; }
+  @media screen and (max-width: 450px) { --standard: 100px; }
+
   font-family: 'Roboto Mono', monospace;
   width: 100%;
   max-width: 1200px;
@@ -20,6 +24,13 @@ const MainWrap = styled.div`
   border: 1px solid #C58940;
   border-radius: 10px;
   overflow: hidden;
+
+  @media screen and (max-width: 1000px) and (min-width: 451px) {
+    max-height: none;
+  }
+  @media screen and (max-width: 450px) {
+    max-height: none;
+  }
 `;
 
 const Overlay = styled.div`

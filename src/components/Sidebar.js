@@ -4,6 +4,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 
 const SideMenu = styled.div`
+  --standard: 100px;
+  @media screen and (max-width: 1000px) and (min-width: 451px) { --standard: 130px; }
+  @media screen and (max-width: 450px) { --standard: 100px; }
+
   width: 25%;
   max-width: 400px;
   min-width: 200px;
@@ -19,14 +23,25 @@ const SideMenu = styled.div`
   border-left: 1px solid #aaa;
   transition: all 0.5s;
 
-  --standard: 100px;
-  @media screen and (max-width: 1024px) and (min-width: 451px) { --standard: 60px; }
-  @media screen and (max-width: 450px) { --standard: 30px; }
+  @media screen and (max-width: 1000px) and (min-width: 451px) {
+    width: 40%;
+    max-height: none;
+  }
+  @media screen and (max-width: 450px) {
+    width: 60%;
+    max-height: none;
+  }
 
   visibility: hidden;
   &.active {
     visibility: visible;
     left: 75%;
+    @media screen and (max-width: 1000px) and (min-width: 451px) {
+      left: 60%;
+    }
+    @media screen and (max-width: 450px) {
+      left: 40%;
+    }
   }
 
   .sideBar__top, .sideBar__top__time {
@@ -65,36 +80,43 @@ const SideMenu = styled.div`
       font-weight: 600;
     }
     h2 {
-      font-size: 30px;
+      font-size: calc(var(--standard) / 100 * 30);
     }
     h3 {
-      font-size: 22px;
+      font-size: calc(var(--standard) / 100 * 22);
     }
     span {
-      font-size: 16px;
-      margin-left: 2px;
-      margin-right: 5px;
+      font-size: calc(var(--standard) / 100 * 16);
+      margin-left: calc(var(--standard) / 100 * 2);
+      margin-right: calc(var(--standard) / 100 * 5);
     }
   }
 
+  .sidebar__body {
+    width: 100%;
+    height: 92%;
+    box-sizing: border-box;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: space-between;
+  }
   .sideBar__list {
     width: 100%;
-    height: 54%;
+    height: calc(var(--standard) * 5);
     box-sizing: border-box;
     list-style: none;
     margin: 0;
     padding: calc(var(--standard) / 100 * 15);
     overflow-y: scroll;
-    border-bottom: 1px solid #ddd;
 
     ::-webkit-scrollbar {
-      width: 10px;
+      width: calc(var(--standard) / 100 * 10);
     }
     ::-webkit-scrollbar-thumb {
       background-color: #a5a5a5;
       background-clip: padding-box;
-      border: 3px solid #ffffff00;
-      border-radius: 30px;
+      border: calc(var(--standard) / 100 * 3) solid #ffffff00;
+      border-radius: calc(var(--standard) / 100 * 30);
     }
     ::-webkit-scrollbar-track {
       background-color: none;
@@ -146,19 +168,19 @@ const SideMenu = styled.div`
 
   .newSchedule {
     width: 100%;
-    height: 38%;
     padding: calc(var(--standard) / 100 * 15);
+    border-top: 1px solid #ddd;
     box-sizing: border-box;
 
     label {
       font-size: calc(var(--standard) / 100 * 14);
       display: block;
-      margin-bottom: calc(var(--standard) / 100 * 13);
+      margin-bottom: calc(var(--standard) / 100 * 3);
     }
 
     input {
       box-sizing: border-box;
-      border: 1px solid #aaa;
+      border: calc(var(--standard) / 100 * 1) solid #aaa;
       border-radius: calc(var(--standard) / 100 * 5);
       background: #fff;
       padding: calc(var(--standard) / 100 * 4);
@@ -262,6 +284,7 @@ const Sidebar = memo(({isOpen, setIsSidebarOpen, targetDate}) => {
         <button onClick={onClodeButtonClick}><FontAwesomeIcon icon={faXmark} /></button>
       </div>
 
+      <div className="sidebar__body">
       <ul className='sideBar__list'>
         {
           test && test.map((v, i) => {
@@ -288,6 +311,7 @@ const Sidebar = memo(({isOpen, setIsSidebarOpen, targetDate}) => {
         <label htmlFor="endTime">종료일시</label><input type="datetime-local" name='endTime' id='endTime' />
         <button type='submit'>일정 추가</button>
       </form>
+      </div>
     </SideMenu>
   );
 });
