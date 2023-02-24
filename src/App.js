@@ -1,10 +1,12 @@
-import React, { memo, useState, useEffect, useCallback } from 'react';
+import React, { memo, useState, useEffect, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import dayjs from 'dayjs';
 
 import Top from './components/Top';
 import CalTable from './components/CalTable';
 import Sidebar from './components/Sidebar';
+import db from './firebase';
+import { collection, doc, getDocs, setDoc } from 'firebase/firestore/lite'
 
 const MainWrap = styled.div`
   --standard: 100px;
@@ -47,39 +49,32 @@ const Overlay = styled.div`
   }
 `;
 
-const test = [
-  {
-    time: "2023-02-20"
-  }
-];
-
 const App = memo(() => {
   const [nowTime, setNowTime] = useState(null);
-	const [dayInfo, setDayInfo] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentSidebarTarget, setCurrentSidebarTarget] = useState(null);
   const [schedule, setSchedule] = useState(null);
 
 	useEffect(() => {
 		setNowTime(new dayjs());
-    setSchedule(test);
+
+    const temp = [];
+    (async() => {
+      const snapshot = await getDocs(collection(db, "calendar"));
+      snapshot.forEach(doc => {
+        temp.push({
+          id: doc.id,
+          data: doc.data()
+        });
+      });
+    })();
+
+    setSchedule(temp);
 	}, []);
 
   useEffect(() => {
     console.log(schedule);
   }, [schedule]);
-
-	useEffect(() => {
-		if (!nowTime) return;
-    
-		setDayInfo(state => {
-			return {
-				startDate: nowTime.subtract(1, 'month').endOf('month').get('D') + 1 - nowTime.date(1).get('d') + 1,
-				startDay: nowTime.date(1).get('d') - 1,
-				endDate: nowTime.endOf('month').get('D'),
-			}
-		});
-	}, [nowTime]);
 
   const onFocusOut = useCallback(e => {
     e.preventDefault();
@@ -89,7 +84,7 @@ const App = memo(() => {
   return (
     <MainWrap>
       <Top nowTime={nowTime} setNowTime={setNowTime} />
-      <CalTable dayInfo={dayInfo} setIsSidebarOpen={setIsSidebarOpen} setCurrentSidebarTarget={setCurrentSidebarTarget} />
+      <CalTable nowTime={nowTime} setIsSidebarOpen={setIsSidebarOpen} setCurrentSidebarTarget={setCurrentSidebarTarget} schedule={schedule} />
       <Overlay className={isSidebarOpen ? "active" : ""} onClick={onFocusOut} />
       <Sidebar isOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} targetDate={currentSidebarTarget} />
     </MainWrap>

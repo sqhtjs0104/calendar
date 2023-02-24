@@ -71,7 +71,7 @@ const Table = styled.table`
   }
 `;
 
-const CalTable = memo(({dayInfo, setIsSidebarOpen, setCurrentSidebarTarget}) => {
+const CalTable = memo(({nowTime, setIsSidebarOpen, setCurrentSidebarTarget, schedule}) => {
   const openSidebar = useCallback(e => {
     e.preventDefault();
     setCurrentSidebarTarget(state => {
@@ -88,6 +88,7 @@ const CalTable = memo(({dayInfo, setIsSidebarOpen, setCurrentSidebarTarget}) => 
     const newTd = document.createElement('td');
     const newDiv = document.createElement('div');
 
+    newDiv.setAttribute('id', `${nowTime.date(value).format('YYYY')}-${nowTime.date(value).format('MM')}-${nowTime.date(value).format('DD')}`);
     newDiv.classList.add('td');
     newDiv.addEventListener('click', openSidebar);
     newDiv.dataset.date = value;
@@ -105,10 +106,20 @@ const CalTable = memo(({dayInfo, setIsSidebarOpen, setCurrentSidebarTarget}) => 
 
     newTd.appendChild(newDiv);
     return newTd;
-  }, [openSidebar]);
+  }, [nowTime, openSidebar]);
+
+  const insertSchedule = useCallback(() => {
+    // To Do: 여기에다가 스케줄 배열 불러온거에서 이번 월에 해당하는 애들만 잘라서 scheduleOfMonth state 변경,
+    // 그 다음 scheduleOfMonth들을 다시 잘라내서 화면에 뿌리기
+  }, [schedule]);
 
   useEffect(() =>{
-		if (!dayInfo) return;
+		if (!nowTime) return;
+    const dayInfo = {
+      startDate: nowTime.subtract(1, 'month').endOf('month').get('D') + 1 - nowTime.date(1).get('d') + 1,
+				startDay: nowTime.date(1).get('d') - 1,
+				endDate: nowTime.endOf('month').get('D'),
+    };
 
 		for (let i = 0; i < 35; i++) {
       const parent = document.querySelector(`.tr${parseInt(i / 7 + 1)}`);
@@ -120,7 +131,7 @@ const CalTable = memo(({dayInfo, setIsSidebarOpen, setCurrentSidebarTarget}) => 
         parent.appendChild(makeDayTd(i, false, i + 1 - dayInfo.startDay));
 			}
 		}
-	}, [dayInfo, makeDayTd]);
+	}, [nowTime, makeDayTd]);
 
   return (
     <Table>
