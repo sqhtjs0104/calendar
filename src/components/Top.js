@@ -63,13 +63,16 @@ const TopDiv = styled.div`
 `;
 
 const Top = memo(({nowTime, setNowTime}) => {
+  const cleanElements = useCallback(e => {
+    const tr = document.querySelectorAll('tbody > tr');
+		tr.forEach(v => {
+			v.innerHTML = "";
+		});
+  }, []);
 	const toPrev = useCallback(e => {
 		e.preventDefault();
 		if (!nowTime) return;
-		const parents = document.querySelectorAll('tbody > tr');
-		parents.forEach(v => {
-			v.innerHTML = "";
-		});
+    cleanElements();
 		setNowTime(state => {
 			return nowTime.subtract(1, 'month');
 		});
@@ -78,10 +81,7 @@ const Top = memo(({nowTime, setNowTime}) => {
 	const toNext = useCallback(e => {
 		e.preventDefault();
 		if (!nowTime) return;
-		const parents = document.querySelectorAll('tbody > tr');
-		parents.forEach(v => {
-			v.innerHTML = "";
-		});
+    cleanElements();
 		setNowTime(state => {
 			return nowTime.add(1, 'month');
 		});

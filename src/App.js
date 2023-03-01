@@ -1,12 +1,13 @@
-import React, { memo, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { memo, useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import dayjs from 'dayjs';
 
 import Top from './components/Top';
 import CalTable from './components/CalTable';
 import Sidebar from './components/Sidebar';
-import db from './firebase';
-import { collection, doc, getDocs, setDoc } from 'firebase/firestore/lite'
+
+import { useSelector, useDispatch } from 'react-redux';
+import { getSchedule } from './slices/ScheduleSlice';
 
 const MainWrap = styled.div`
   --standard: 100px;
@@ -53,28 +54,18 @@ const App = memo(() => {
   const [nowTime, setNowTime] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentSidebarTarget, setCurrentSidebarTarget] = useState(null);
-  const [schedule, setSchedule] = useState(null);
+  
+  const { data, loading, error } = useSelector(state => state.ScheduleSlice);
+  const dispatch = useDispatch();
 
 	useEffect(() => {
 		setNowTime(new dayjs());
-
-    const temp = [];
-    (async() => {
-      const snapshot = await getDocs(collection(db, "calendar"));
-      snapshot.forEach(doc => {
-        temp.push({
-          id: doc.id,
-          data: doc.data()
-        });
-      });
-    })();
-
-    setSchedule(temp);
 	}, []);
 
   useEffect(() => {
-    console.log(schedule);
-  }, [schedule]);
+    if (!nowTime) return;
+    dispatch(getSchedule(nowTime));
+  }, [nowTime]);
 
   const onFocusOut = useCallback(e => {
     e.preventDefault();
@@ -84,7 +75,7 @@ const App = memo(() => {
   return (
     <MainWrap>
       <Top nowTime={nowTime} setNowTime={setNowTime} />
-      <CalTable nowTime={nowTime} setIsSidebarOpen={setIsSidebarOpen} setCurrentSidebarTarget={setCurrentSidebarTarget} schedule={schedule} />
+      <CalTable nowTime={nowTime} setIsSidebarOpen={setIsSidebarOpen} setCurrentSidebarTarget={setCurrentSidebarTarget} />
       <Overlay className={isSidebarOpen ? "active" : ""} onClick={onFocusOut} />
       <Sidebar isOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} targetDate={currentSidebarTarget} />
     </MainWrap>
