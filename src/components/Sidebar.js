@@ -5,7 +5,7 @@ import { faXmark } from '@fortawesome/free-solid-svg-icons';
 
 const SideMenu = styled.div`
   --standard: 100px;
-  @media screen and (max-width: 1000px) and (min-width: 451px) { --standard: 130px; }
+  @media screen and (max-width: 1000px) and (min-width: 451px) { --standard: 100px; }
   @media screen and (max-width: 450px) { --standard: 100px; }
 
   width: 25%;

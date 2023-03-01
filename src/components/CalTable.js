@@ -50,22 +50,15 @@ const Table = styled.table`
       max-height: ${props => props.heightUnit}px;
       overflow: hidden;
       box-sizing: border-box;
+      position: relative;
 
       @media screen and (max-width: 450px) {
         border: 3px solid #f7f3ec;
       }
 
-      &.sat {
-        color: #3850d8;
-      }
-
-      &.sun {
-        color: #d33838;
-      }
-
-      &.outer {
-        opacity: 0.4;
-      }
+      &.sat { color: #3850d8; }
+      &.sun { color: #d33838; }
+      &.outer { opacity: 0.4; }
 
       &:hover {
         cursor: pointer;
@@ -87,6 +80,7 @@ const Table = styled.table`
         padding-right: calc(var(--standard) / 100 * 5);
         box-sizing: border-box;
         text-overflow: ellipsis;
+        position: absolute;
       }
     }
   }
@@ -117,15 +111,15 @@ const CalTable = memo(({nowTime, setIsSidebarOpen, setCurrentSidebarTarget}) => 
 
     const targetDate = nowTime.add(index, 'M').date(value);
 
-    newDiv.setAttribute('id', targetDate.format('YYYY-MM-DD'));
+    newDiv.setAttribute('id', `td${targetDate.format('YYYY-MM-DD')}`);
     newDiv.classList.add('td__div');
     newDiv.addEventListener('click', openSidebar);
     newDiv.dataset.date = value;
     newDiv.dataset.day = targetDate.get('d') % 7;
 
-    if (newDiv.dataset.day % 7 === 5) {
+    if (newDiv.dataset.day % 7 === 6) {
       newDiv.classList.add('sat');
-    } else if (newDiv.dataset.day % 7 === 6) {
+    } else if (newDiv.dataset.day % 7 === 0) {
       newDiv.classList.add('sun');
     }
 
@@ -143,19 +137,19 @@ const CalTable = memo(({nowTime, setIsSidebarOpen, setCurrentSidebarTarget}) => 
   const renderCalendar = useCallback(isSixWeek =>{
     const firstDay = nowTime.date(1).get('d');
     const dayInfo = {
-      startDate: nowTime.subtract(1, 'month').endOf('month').get('D') - (isSixWeek ? 7 : firstDay) + 2,
-      startDay: isSixWeek ? 6 : firstDay - 1,
+      startDate: nowTime.subtract(1, 'month').endOf('month').get('D') - (firstDay == 0 ? 7 : firstDay) + 2,
+      startDay: firstDay == 0 ? 7 : firstDay,
       endDate: nowTime.endOf('month').get('D'),
     };
 
 		for (let i = 0; i < (isSixWeek ? 42 : 35); i++) {
       const parent = document.querySelector(`.tr${parseInt(i / 7 + 1)}`);
-			if (i < dayInfo.startDay) { // 아직 이번달 시작 안함
+			if (i < dayInfo.startDay - 1) { // 아직 이번달 시작 안함
         parent.appendChild(makeDayTd(-1, true, dayInfo.startDate + i));
-			} else if (i > dayInfo.endDate + dayInfo.startDay - 1) { // 이번달 끝남
-        parent.appendChild(makeDayTd(1, true, i - dayInfo.endDate - dayInfo.startDay + 1));
+			} else if (i > dayInfo.endDate + dayInfo.startDay - 2) { // 이번달 끝남
+        parent.appendChild(makeDayTd(1, true, i - dayInfo.endDate - dayInfo.startDay + 2));
 			} else { // 이게 이번달 날자들
-        parent.appendChild(makeDayTd(0, false, i + 1 - dayInfo.startDay));
+        parent.appendChild(makeDayTd(0, false, i + 2 - dayInfo.startDay));
 			}
 		};
 	});
@@ -165,17 +159,35 @@ const CalTable = memo(({nowTime, setIsSidebarOpen, setCurrentSidebarTarget}) => 
     const end = data.endTime ? dayjs(data.endTime.split(' ')[0]) : dayjs(start);
     const during = Math.ceil(end.diff(start) / 1000 / 60 / 60 / 24);
 
+    let floor = 0;
+    const targetChilds = Array.from(document.querySelectorAll(`#td${start.format('YYYY-MM-DD')} > div.td__list`));
+    for (let i = 0; i < targetChilds.length; i++) {
+      if (targetChilds[i].dataset.floor != i) break;
+      floor++;
+    }
+    floor = floor % 3;
+
     for (let i = 0; i <= during; i++) {
       if (start.add(i, 'd').isBefore(end.add(1, 'd'))) {
-        const target = document.getElementById(start.add(i, 'd').format('YYYY-MM-DD'));
+        const target = document.querySelector(`#td${start.add(i, 'd').format('YYYY-MM-DD')}`);
+
         if (target) {
           const scheduleItem = document.createElement('div');
           scheduleItem.classList.add('td__list');
+          scheduleItem.dataset.floor = floor;
 
-          scheduleItem.innerHTML = data.name;
+          switch (floor) {
+            case 0: scheduleItem.style.backgroundColor = 'skyblue'; break;
+            case 1: scheduleItem.style.backgroundColor = 'orange'; break;
+            case 2: scheduleItem.style.backgroundColor = 'violet'; break;
+            default: break;
+          }
+
+          scheduleItem.style.top = `${floor * 18 + 31}px`;
+
+          scheduleItem.innerHTML = i > 0 ? '&nbsp;' : data.name;
           target.appendChild(scheduleItem);
         }
-        start.add(1, 'd');
       } else break;
     }
   });
@@ -183,7 +195,9 @@ const CalTable = memo(({nowTime, setIsSidebarOpen, setCurrentSidebarTarget}) => 
   const onResize = useCallback(() => {
     const tbody = document.querySelector('tbody');
     if (!tbody || !nowTime) return;
-    const isSix = nowTime.date(1).get('d') == 0;
+    const isSix = nowTime.date(1).get('d') == 0 ? true : (
+      (nowTime.date(1).get('d') == 6 && nowTime.endOf('M').get('D') == 31) ? true : false
+    );
     setWeekCount(isSix ? 6 : 5);
     setHeightUnit(isSix ? tbody.scrollHeight / 6 - 5 : tbody.scrollHeight / 5 - 5);
   }, [nowTime]);
@@ -192,7 +206,9 @@ const CalTable = memo(({nowTime, setIsSidebarOpen, setCurrentSidebarTarget}) => 
     if (!nowTime) return;
     window.addEventListener('resize', onResize);
     onResize();
-    const isSix = nowTime.date(1).get('d') == 0;
+    const isSix = nowTime.date(1).get('d') == 0 ? true : (
+      (nowTime.date(1).get('d') == 6 && nowTime.endOf('M').get('D') == 31) ? true : false
+    );
     renderCalendar(isSix);
   }, [nowTime]);
 
