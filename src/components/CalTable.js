@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, { memo, useCallback, useEffect, useState, useMemo } from 'react';
 import styled from 'styled-components';
 import dayjs from 'dayjs';
 
@@ -42,7 +42,7 @@ const Table = styled.table`
     border-radius: 10px;
     background-color: #FAF8F1;
     word-break: break-all;
-    height: 20%;
+    height: ${props => 100 / props.weekCount}%;
     box-sizing: border-box;
 
     .td__div {
@@ -96,7 +96,7 @@ const CalTable = memo(({nowTime, setIsSidebarOpen, setCurrentSidebarTarget}) => 
   const { data, loading, error } = useSelector(state => state.ScheduleSlice);
   const dispatch = useDispatch();
 
-  const [isSixWeek, setIsSixWeek] = useState(false);
+  const [weekCount, setWeekCount] = useState(null);
   const [heightUnit, setHeightUnit] = useState(null);
 
   const openSidebar = useCallback(e => {
@@ -140,19 +140,15 @@ const CalTable = memo(({nowTime, setIsSidebarOpen, setCurrentSidebarTarget}) => 
     return newTd;
   }, [nowTime, openSidebar]);
 
-  useEffect(() =>{
-		if (!nowTime) return;
-
+  const renderCalendar = useCallback(isSixWeek =>{
     const firstDay = nowTime.date(1).get('d');
-    const isSix = firstDay == 0;
-    setIsSixWeek(isSix);
     const dayInfo = {
-      startDate: nowTime.subtract(1, 'month').endOf('month').get('D') - (isSix ? 7 : firstDay) + 2,
-      startDay: isSix ? 6 : firstDay - 1,
+      startDate: nowTime.subtract(1, 'month').endOf('month').get('D') - (isSixWeek ? 7 : firstDay) + 2,
+      startDay: isSixWeek ? 6 : firstDay - 1,
       endDate: nowTime.endOf('month').get('D'),
     };
 
-		for (let i = 0; i < (isSix ? 42 : 35); i++) {
+		for (let i = 0; i < (isSixWeek ? 42 : 35); i++) {
       const parent = document.querySelector(`.tr${parseInt(i / 7 + 1)}`);
 			if (i < dayInfo.startDay) { // 아직 이번달 시작 안함
         parent.appendChild(makeDayTd(-1, true, dayInfo.startDate + i));
@@ -162,7 +158,7 @@ const CalTable = memo(({nowTime, setIsSidebarOpen, setCurrentSidebarTarget}) => 
         parent.appendChild(makeDayTd(0, false, i + 1 - dayInfo.startDay));
 			}
 		};
-	}, [nowTime]);
+	});
 
   const insertSchedule = useCallback(data => {
     const start = dayjs(data.yearMonth + data.date);
@@ -182,10 +178,25 @@ const CalTable = memo(({nowTime, setIsSidebarOpen, setCurrentSidebarTarget}) => 
         start.add(1, 'd');
       } else break;
     }
-  }, []);
+  });
+
+  const onResize = useCallback(() => {
+    const tbody = document.querySelector('tbody');
+    if (!tbody || !nowTime) return;
+    const isSix = nowTime.date(1).get('d') == 0;
+    setWeekCount(isSix ? 6 : 5);
+    setHeightUnit(isSix ? tbody.scrollHeight / 6 - 5 : tbody.scrollHeight / 5 - 5);
+  }, [nowTime]);
 
   useEffect(() => {
     if (!nowTime) return;
+    window.addEventListener('resize', onResize);
+    onResize();
+    const isSix = nowTime.date(1).get('d') == 0;
+    renderCalendar(isSix);
+  }, [nowTime]);
+
+  useEffect(() => {
     if (!data) {
       dispatch(getCurrentData());
       return;
@@ -194,21 +205,10 @@ const CalTable = memo(({nowTime, setIsSidebarOpen, setCurrentSidebarTarget}) => 
     data.forEach(v => {
       insertSchedule(v);
     });
-  }, [nowTime, data]);
-
-  const onResize = useCallback(() => {
-    const tbody = document.querySelector('tbody');
-    if (!tbody) return;
-    setHeightUnit(isSixWeek ? tbody.scrollHeight / 6 - 5 : tbody.scrollHeight / 5 - 5);
-  }, [isSixWeek]);
-
-  useEffect(() => {
-    onResize();
-    window.addEventListener('resize', onResize);
-  });
+  }, [data]);
 
   return (
-    <Table heightUnit={heightUnit}>
+    <Table weekCount={weekCount} heightUnit={heightUnit}>
       <thead>
         <tr>
           <th>MON</th>
