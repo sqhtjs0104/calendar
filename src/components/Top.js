@@ -62,30 +62,28 @@ const TopDiv = styled.div`
   }
 `;
 
-const Top = memo(({nowTime, setNowTime}) => {
-  const cleanElements = useCallback(e => {
-    const tr = document.querySelectorAll('tbody > tr');
-		tr.forEach(v => {
-			v.innerHTML = "";
-		});
-  }, []);
+const Top = memo(({nowTime, setNowTime, setIsYMPickerOpen, cleanElements}) => {
 	const toPrev = useCallback(e => {
 		e.preventDefault();
 		if (!nowTime) return;
     cleanElements();
 		setNowTime(state => {
-			return nowTime.subtract(1, 'month');
+			return state.subtract(1, 'month');
 		});
-	}, [nowTime]);
+	});
 
 	const toNext = useCallback(e => {
 		e.preventDefault();
 		if (!nowTime) return;
     cleanElements();
 		setNowTime(state => {
-			return nowTime.add(1, 'month');
+			return state.add(1, 'month');
 		});
-	}, [nowTime]);
+	});
+
+  const onYMPickerOpen = useCallback(e => {
+    setIsYMPickerOpen(true);
+  });
 
   return (
     <>
@@ -94,7 +92,7 @@ const Top = memo(({nowTime, setNowTime}) => {
             <FontAwesomeIcon icon={faSquareCaretLeft} />
         </button>
         <div className='top__nowYM'>
-          <div className='top__nowYM__info'>
+          <div className='top__nowYM__info' onClick={onYMPickerOpen}>
 						<h1><span>{nowTime && nowTime?.month() + 1}</span>월</h1>
 						<h3><span>{nowTime && nowTime?.year()}</span>년</h3>
 					</div>

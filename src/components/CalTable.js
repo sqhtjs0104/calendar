@@ -96,11 +96,7 @@ const CalTable = memo(({nowTime, setIsSidebarOpen, setCurrentSidebarTarget}) => 
   const openSidebar = useCallback(e => {
     e.preventDefault();
     setCurrentSidebarTarget(state => {
-      const temp = {
-        date: e.currentTarget.dataset.date,
-        day: e.currentTarget.dataset.day,
-      }
-      return temp;
+      return dayjs(e.currentTarget.getAttribute('id').substring(2));
     });
     setIsSidebarOpen(true);
   }, [setCurrentSidebarTarget, setIsSidebarOpen]);
@@ -114,8 +110,6 @@ const CalTable = memo(({nowTime, setIsSidebarOpen, setCurrentSidebarTarget}) => 
     newDiv.setAttribute('id', `td${targetDate.format('YYYY-MM-DD')}`);
     newDiv.classList.add('td__div');
     newDiv.addEventListener('click', openSidebar);
-    newDiv.dataset.date = value;
-    newDiv.dataset.day = targetDate.get('d') % 7;
 
     if (newDiv.dataset.day % 7 === 6) {
       newDiv.classList.add('sat');
@@ -154,9 +148,9 @@ const CalTable = memo(({nowTime, setIsSidebarOpen, setCurrentSidebarTarget}) => 
 		};
 	});
 
-  const insertSchedule = useCallback(data => {
-    const start = dayjs(data.yearMonth + data.date);
-    const end = data.endTime ? dayjs(data.endTime.split(' ')[0]) : dayjs(start);
+  const insertSchedule = useCallback(item => {
+    const start = dayjs(`${item.yearMonth}-${item.date}`);
+    const end = item.endTime ? dayjs(item.endTime.split(' ')[0]) : dayjs(start);
     const during = Math.ceil(end.diff(start) / 1000 / 60 / 60 / 24);
 
     let floor = 0;
@@ -165,7 +159,6 @@ const CalTable = memo(({nowTime, setIsSidebarOpen, setCurrentSidebarTarget}) => 
       if (targetChilds[i].dataset.floor != i) break;
       floor++;
     }
-    floor = floor % 3;
 
     for (let i = 0; i <= during; i++) {
       if (start.add(i, 'd').isBefore(end.add(1, 'd'))) {
@@ -176,7 +169,7 @@ const CalTable = memo(({nowTime, setIsSidebarOpen, setCurrentSidebarTarget}) => 
           scheduleItem.classList.add('td__list');
           scheduleItem.dataset.floor = floor;
 
-          switch (floor) {
+          switch (floor % 3) {
             case 0: scheduleItem.style.backgroundColor = 'skyblue'; break;
             case 1: scheduleItem.style.backgroundColor = 'orange'; break;
             case 2: scheduleItem.style.backgroundColor = 'violet'; break;
@@ -185,12 +178,12 @@ const CalTable = memo(({nowTime, setIsSidebarOpen, setCurrentSidebarTarget}) => 
 
           scheduleItem.style.top = `${floor * 18 + 31}px`;
 
-          scheduleItem.innerHTML = i > 0 ? '&nbsp;' : data.name;
+          scheduleItem.innerHTML = i > 0 ? '&nbsp;' : item.name;
           target.appendChild(scheduleItem);
         }
       } else break;
     }
-  });
+  }, [data]);
 
   const onResize = useCallback(() => {
     const tbody = document.querySelector('tbody');
@@ -219,6 +212,7 @@ const CalTable = memo(({nowTime, setIsSidebarOpen, setCurrentSidebarTarget}) => 
     };
 
     data.forEach(v => {
+      if (!v) return;
       insertSchedule(v);
     });
   }, [data]);

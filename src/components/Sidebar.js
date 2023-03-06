@@ -1,7 +1,11 @@
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
+import dayjs from 'dayjs';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faPenToSquare, faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
+
+import { useDispatch, useSelector } from 'react-redux';
+import { getCurrentData, deleteSchedule, addSchedule, updateSchedule } from '../slices/ScheduleSlice';
 
 const SideMenu = styled.div`
   --standard: 100px;
@@ -122,7 +126,7 @@ const SideMenu = styled.div`
       background-color: none;
     }
 
-    li {
+    li, .updateSchedule {
       margin-bottom: calc(var(--standard) / 100 * 10);
       padding: calc(var(--standard) / 100 * 5);
       border: 1px solid #ddd;
@@ -161,6 +165,17 @@ const SideMenu = styled.div`
         span {
           margin-left: calc(var(--standard) / 100 * 10);
           color: #666;
+        }
+      }
+
+      input {
+        padding: 0;
+        margin: 0;
+        font-size: calc(var(--standard) / 100 * 12);
+
+        &[type='datetime-local'] {
+          width: 40%;
+          margin-top: calc(var(--standard) / 100 * 5);
         }
       }
     }
@@ -211,100 +226,205 @@ const SideMenu = styled.div`
   }
 `;
 
-const test = [
-  {
-    name: "test",
-    place: "test",
-    time: "time",
-  },
-  {
-    name: "test",
-    place: "test",
-    time: "time",
-  },
-  {
-    name: "test",
-    place: "test",
-    time: "time",
-  },
-  {
-    name: "test",
-    place: "test",
-    time: "time",
-  },
-  {
-    name: "test",
-    place: "test",
-    time: "time",
-  },
-  {
-    name: "test",
-    place: "test",
-    time: "time",
-  },
-  {
-    name: "test",
-    place: "test",
-    time: "time",
-  },
-]
-
 const Sidebar = memo(({isOpen, setIsSidebarOpen, targetDate}) => {
-  const onClodeButtonClick = useCallback(e => {
+  const { data, loading, error } = useSelector(state => state.ScheduleSlice);
+  const dispatch = useDispatch();
+
+  const [currentSchedule, setCurrentSchedule] = useState(null);
+  const [updateTarget, setUpdateTarget] = useState(null);
+
+  useEffect(() => {
+    if (!data) {
+      dispatch(getCurrentData());
+      return;
+    }
+  }, [data]);
+
+  useEffect(() => {
+    if (!targetDate) return;
+    const temp = data.filter(v => {
+      if (v.endTime) {
+        if (targetDate.isAfter(dayjs(`${v.yearMonth}-${v.date}`).subtract(1, 'd')) && targetDate.isBefore(dayjs(`${v.endTime.split(' ')[0]}`).add(1, 'd'))) {
+          return true;
+        }
+      } else {
+        if (targetDate.format('YYYY-MM-DD') == `${v.yearMonth}-${v.date}`) {
+          return true;
+        }
+      }
+      return false;
+    });
+    setCurrentSchedule(temp);
+  }, [targetDate, data]);
+
+  const onCloseButtonClick = useCallback(e => {
     e.preventDefault();
     setIsSidebarOpen(false);
   }, [setIsSidebarOpen]);
 
-  const onNewScheduleAdd = useCallback(e => {
+  const deleteAllTdList = useCallback(e => {
+    const targets = document.querySelectorAll('.td__list');
+    targets.forEach(v => {
+      v.remove();
+    });
+  });
+  
+  const deleteScheduleList = useCallback(e => {
     e.preventDefault();
-    console.log(e.currentTarget.time.value);
-  }, []);
+    
+    if (window.confirm('스케줄을 삭제하시겠습니까?')) {
+      deleteAllTdList();
+      const targetId = e.currentTarget.closest('li').getAttribute('id');
+      dispatch(deleteSchedule(targetId));
+    } else {
+      return;
+    }
+  });
+
+  const addScheduleList = useCallback(e => {
+    e.preventDefault();
+
+    const current = e.currentTarget;
+    
+    const temp = {
+      name: current.title.value,
+      place: current.place.value ? current.place.value : null,
+      yearMonth: targetDate.format('YYYY-MM'),
+      date: targetDate.format('DD'),
+      time: current.time.value ? current.time.value : null,
+      endTime: current.endTime.value ? `${current.endTime.value.split('T')[0]} ${current.endTime.value.split('T')[1]}` : null
+    };
+
+    if (!temp.name) {
+      window.alert('일정 이름을 입력하세요.');
+      return;
+    }
+
+    deleteAllTdList();
+    dispatch(addSchedule(temp));
+
+    current.title.value = null;
+    current.place.value = null;
+    current.time.value = null;
+    current.endTime.value = null;
+  });
+
+  const onUpdateScheduleClick = useCallback(e => {
+    e.preventDefault();
+    const targetId = e.currentTarget.closest('li').getAttribute('id');
+    setUpdateTarget(targetId);
+  });
+
+  const onUpdateCancleClick = useCallback(e => {
+    e.preventDefault();
+    setUpdateTarget(null);
+  });
+
+  const updateScheduleItem = useCallback(e => {
+    e.preventDefault();
+
+    const current = e.currentTarget;
+    const targetId = current.getAttribute('id');
+    
+    const temp = {
+      name: current.title.value,
+      place: current.place.value ? current.place.value : null,
+      yearMonth: current.startTime.value ? `${current.startTime.value.split('-')[0]}-${current.startTime.value.split('-')[1]}` : targetDate.format('YYYY-MM'),
+      date: current.startTime.value ? `${current.startTime.value.split('-')[2].split('T')[0]}` : targetDate.format('DD'),
+      time: current.startTime.value ? `${current.startTime.value.split('T')[1]}` : null,
+      endTime: current.endTime.value ? `${current.endTime.value.split('T')[0]} ${current.endTime.value.split('T')[1]}` : null
+    };
+
+    if (!temp.name) {
+      window.alert('일정 이름을 입력하세요.');
+      return;
+    }
+
+    deleteAllTdList();
+    dispatch(updateSchedule({
+      id: targetId,
+      data: temp
+    }));
+    setUpdateTarget(null);
+  });
+
+  useEffect(() => {
+    const current = document.querySelector('.newSchedule');
+    current.title.value = null;
+    current.place.value = null;
+    current.time.value = null;
+    current.endTime.value = null;
+  }, [targetDate]);
 
   return (
     <SideMenu className={isOpen ? "active" : ""}>
       <div className='sideBar__top'>
         <div className='sideBar__top__time'>
-          <h2>{targetDate && targetDate.date}</h2>
+          <h2>{targetDate && targetDate.format('DD')}</h2>
           <span>일</span>
           <h3>
             {
               targetDate && (
-                targetDate?.day === "0" ? '월' :
-                targetDate?.day === "1" ? '화' :
-                targetDate?.day === "2" ? '수' :
-                targetDate?.day === "3" ? '목' :
-                targetDate?.day === "4" ? '금' :
-                targetDate?.day === "5" ? '토' :
-                targetDate?.day === "6" ? '일' : '??'
+                targetDate.day() === 0 ? '월' :
+                targetDate.day() === 1 ? '화' :
+                targetDate.day() === 2 ? '수' :
+                targetDate.day() === 3 ? '목' :
+                targetDate.day() === 4 ? '금' :
+                targetDate.day() === 5 ? '토' :
+                targetDate.day() === 6 ? '일' : '??'
               )
             }
           </h3>
           <span>요일</span>
         </div>
-        <button onClick={onClodeButtonClick}><FontAwesomeIcon icon={faXmark} /></button>
+        <button onClick={onCloseButtonClick}><FontAwesomeIcon icon={faXmark} /></button>
       </div>
 
       <div className="sidebar__body">
       <ul className='sideBar__list'>
         {
-          test && test.map((v, i) => {
+          currentSchedule && currentSchedule.map((v, i) => {
             return (
-              <li key={i}>
-                <div className='scheduleList__top'>
-                  <h4>{v?.name}</h4>
-                  <button><FontAwesomeIcon icon={faXmark} /></button>
-                </div>
-                <p>
-                  <span>{v?.place}</span>
-                  <span>{v?.time}</span>
-                </p>
-              </li>
+              v.id !== updateTarget ? (
+                <li key={i} id={v.id}>
+                  <div className='scheduleList__top'>
+                    <h4>{v?.name}</h4>
+                    <div>
+                      <button title='수정하기' onClick={onUpdateScheduleClick}><FontAwesomeIcon icon={faPenToSquare} /></button>
+                      <button title='삭제하기' onClick={deleteScheduleList}><FontAwesomeIcon icon={faXmark} /></button>
+                    </div>
+                  </div>
+                  <p>
+                    <span>{v?.place}</span>
+                    <span>{v?.yearMonth}-{v?.date} {v?.time}</span>
+                    {
+                      v?.endTime ? (
+                        <span>~ {v.endTime}</span>
+                      ) : <></>
+                    }
+                  </p>
+                </li>
+              ) : (
+                <form className="updateSchedule" onSubmit={updateScheduleItem} id={v.id} key={i}>
+                  <div className='scheduleList__top'>
+                    <input type='text' name='title' defaultValue={v?.name} />
+                    <div>
+                      <button title='저장하기' type='submit'><FontAwesomeIcon icon={faFloppyDisk} /></button>
+                      <button title='취소하기' onClick={onUpdateCancleClick}><FontAwesomeIcon icon={faXmark} /></button>
+                    </div>
+                  </div>
+                  <p>
+                    <input type='text' name='place' defaultValue={v?.place} />
+                    <input type="datetime-local" name='startTime' defaultValue={`${v?.yearMonth}-${v?.date}T${v?.time}`} /> ~ <input type="datetime-local" name='endTime' defaultValue={`${v?.endTime?.split(' ')[0]}T${v?.endTime?.split(' ')[1]}`} />
+                  </p>
+                </form>
+              )
             )
           })
         }
       </ul>
 
-      <form className="newSchedule" onSubmit={onNewScheduleAdd}>
+      <form className="newSchedule" onSubmit={addScheduleList}>
         <label htmlFor="title">이름</label><input type="text" placeholder="스케줄명" name='title' id='title' />
         <label htmlFor="place">장소</label><input type="text" placeholder="장소" name='place' id='place' />
         <label htmlFor="time">시간</label><input type="time" name='startTime' id='time' />

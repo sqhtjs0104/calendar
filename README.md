@@ -12,3 +12,5 @@
 - @fortawesome/react-fontawesome
 - react-redux
 - @reduxjs/toolkit
+- lodash
+- gh-pages
