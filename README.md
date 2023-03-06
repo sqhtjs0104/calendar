@@ -36,4 +36,4 @@ HTML Element를 직접 Create해 append하는 방식이 사용되었습니다.
 또한 useEffect와 useCallback의 중구난방함이 있습니다.
 
 ## Example
-![IMG](./mainScreenShot.png)
+![IMG](./mainScreenShot.PNG)
